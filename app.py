@@ -14,9 +14,9 @@ import time
 st.set_page_config(page_title="Resume Matcher", layout="wide")
 st.title("🔍 Resume & Job Description Matcher")
 
-st.markdown("Upload your resume and paste a job description or fetch one from LinkedIn to receive a skill match score and suggestions.")
+st.markdown("Upload one or more resumes and paste a job description (or fetch from URL) to receive skill match scores and suggestions.")
 
-resume_file = st.file_uploader("Upload your Resume (PDF)", type=["pdf"])
+resume_files = st.file_uploader("Upload Your Resume(s) (PDF)", type=["pdf"], accept_multiple_files=True)
 
 def fetch_job_description(url):
     options = Options()
@@ -28,17 +28,14 @@ def fetch_job_description(url):
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
 
-    # Try LinkedIn
     if "linkedin.com" in url:
         content = soup.find("div", class_="description__text")
         if content:
             return content.get_text("\n")
-    # Try Indeed
     elif "indeed.com" in url:
         content = soup.find("div", id="jobDescriptionText")
         if content:
             return content.get_text("\n")
-    # Try Lever
     elif "lever.co" in url:
         content = soup.find("div", class_="content")
         if content:
@@ -49,28 +46,43 @@ def fetch_job_description(url):
 job_url = st.text_input("🔗 Optional: Paste a Job URL from LinkedIn, Indeed, or Lever")
 if st.button("Fetch JD from URL") and job_url:
     with st.spinner("Fetching job description..."):
-        jd_fetched = fetch_job_description(job_url).strip().replace('  ', ' ')
+        jd_fetched = fetch_job_description(job_url).strip().replace('\n', ' ').replace('  ', ' ')
         st.session_state.jd_input = jd_fetched
 
 jd_input = st.text_area("Paste Job Description", value=st.session_state.get("jd_input", ""))
 st.session_state.jd_input = jd_input
 
-if "result" not in st.session_state:
-    st.session_state.result = None
+if "results" not in st.session_state:
+    st.session_state.results = []
 
 if st.button("Analyze"):
-    if resume_file and jd_input:
-        resume_text = extract_text_from_pdf(resume_file)
-        result = match_keywords(resume_text, jd_input)
+    if resume_files and jd_input:
+        st.session_state.results = []  # Clear previous results
+        for resume_file in resume_files:
+            resume_text = extract_text_from_pdf(resume_file)
+            result = match_keywords(resume_text, jd_input)
+            st.session_state.results.append({
+                "filename": resume_file.name,
+                "resume_text": resume_text,
+                "result": result
+            })
 
-        st.session_state.resume_text = resume_text
-        st.session_state.jd_input = jd_input
-        st.session_state.result = result
+if st.session_state.results:
+    sorted_results = sorted(st.session_state.results, key=lambda x: x['result']['score'], reverse=True)
+    best_resume = sorted_results[0]
 
-if st.session_state.result:
-    result = st.session_state.result
-    resume_text = st.session_state.resume_text
-    jd_input = st.session_state.jd_input
+    st.markdown("## 🏆 Best Matching Resume")
+    st.markdown(f"**{best_resume['filename']}** — Score: {best_resume['result']['score']}%")
+
+    st.markdown("---")
+    st.markdown("## 📋 All Resume Scores")
+    for entry in sorted_results:
+        st.markdown(f"**{entry['filename']}** — Match Score: {entry['result']['score']}%")
+
+    selected = st.selectbox("Select a resume to explore further:", [entry['filename'] for entry in sorted_results], key="resume_select")
+    selected_entry = [entry for entry in st.session_state.results if entry['filename'] == selected][0]
+    result = selected_entry['result']
+    resume_text = selected_entry['resume_text']
 
     st.markdown(f"### ✅ Final Match Score: {result['score']}%")
     st.markdown(f"- **Keyword Match Score:** {result['keyword_score']}%")
@@ -88,7 +100,6 @@ if st.session_state.result:
         resume_skills = extract_skills(resume_text, SKILL_CATEGORIES)
         jd_skills = extract_skills(jd_input, SKILL_CATEGORIES)
 
-        # Filter resume skills to only include those also in JD
         resume_skills = {
             cat: [s for s in skills if s in jd_skills.get(cat, [])]
             for cat, skills in resume_skills.items()
@@ -160,15 +171,19 @@ if st.session_state.result:
             def escape_phrase(s):
                 return r'\b' + r'\s+'.join(re.escape(w) for w in s.split()) + r'\b'
 
-            for skill in all_skills:
-                pattern = re.compile(escape_phrase(skill), re.IGNORECASE)
-                if skill in resume_skills_set:
-                    text = pattern.sub(lambda m: f"<span style='background-color: #d4edda; color: black;'>{m.group(0)}</span>", text)
-                elif skill in jd_skills_set:
-                    text = pattern.sub(lambda m: f"<span style='background-color: #f8d7da; color: black;'>{m.group(0)}</span>", text)
-            return text
+            def replacer(match):
+                word = match.group(0).lower()
+                if word in resume_skills_set:
+                    return f"<span style='background-color: #d4edda; color: black;'>{match.group(0)}</span>"  # Green
+                elif word in jd_skills_set:
+                    return f"<span style='background-color: #f8d7da; color: black;'>{match.group(0)}</span>"  # Red
+                return match.group(0)
 
-        highlighted_jd = highlight_skills_in_text(jd_input, set().union(*resume_skills.values()), all_jd_skills)
+            pattern = re.compile("|".join(escape_phrase(skill) for skill in all_skills), re.IGNORECASE)
+            return pattern.sub(replacer, text)
+
+
+        highlighted_jd = highlight_skills_in_text(jd_input, set().union(*[s for s in resume_skills.values() if s]), all_jd_skills)
         st.markdown("""
             <div style='line-height: 1.6; white-space: pre-wrap;'>
         """ + highlighted_jd + "</div>", unsafe_allow_html=True)
@@ -177,5 +192,5 @@ if st.session_state.result:
         st.markdown("### 🧼 Missing Keywords")
         st.write(result['missing_keywords'])
 
-elif resume_file or jd_input:
+elif resume_files or jd_input:
     st.info("Click the Analyze button to process your inputs.")
