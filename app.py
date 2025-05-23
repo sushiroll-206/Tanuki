@@ -49,7 +49,7 @@ def fetch_job_description(url):
 job_url = st.text_input("🔗 Optional: Paste a Job URL from LinkedIn, Indeed, or Lever")
 if st.button("Fetch JD from URL") and job_url:
     with st.spinner("Fetching job description..."):
-        jd_fetched = fetch_job_description(job_url).strip().replace('  ', ' ')
+        jd_fetched = fetch_job_description(job_url).strip().replace('', ' ').replace('  ', ' ')
         st.session_state.jd_input = jd_fetched
 
 jd_input = st.text_area("Paste Job Description", value=st.session_state.get("jd_input", ""))
@@ -87,6 +87,12 @@ if st.session_state.result:
         st.markdown("### 🧠 Extracted Skills Comparison")
         resume_skills = extract_skills(resume_text, SKILL_CATEGORIES)
         jd_skills = extract_skills(jd_input, SKILL_CATEGORIES)
+
+        # Filter resume skills to only include those also in JD
+        resume_skills = {
+            cat: [s for s in skills if s in jd_skills.get(cat, [])]
+            for cat, skills in resume_skills.items()
+        }
 
         tag_style = """
         <style>
