@@ -1,0 +1,39 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.venv/
+ENV/
+
+# IDE and editor settings
+.vscode/
+.idea/
+
+# macOS system files
+.DS_Store
+
+# Selenium download files (if applicable)
+*.log
+*.crdownload
+
+# Streamlit cache
+.streamlit/
+
+# Python environment files
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# SQLite database (if created)
+*.sqlite3
+*.db
+
+# Environment variables / secrets
+.env
+.env.*
