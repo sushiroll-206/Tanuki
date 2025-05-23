@@ -35,7 +35,7 @@ This project is transitioning into a full-featured, scalable web platform.
   - User management (login, register)
 
 ### 🔐 Phase 2: User Authentication
-- JWT-based auth system
+- JWT based auth system
 - Store resumes, jobs, and user profile data
 - Secure file storage
 
@@ -50,16 +50,16 @@ This project is transitioning into a full-featured, scalable web platform.
 
 ### 🧠 Phase 4: Resume Optimizer Engine
 - Input: Skills, Experience, Target Role
-- Output: Suggested or AI-augmented resume variant
-- Rule-based & GPT-assisted versions
+- Output: Suggested or AI augmented resume variant
+- Rule based & GPT assisted versions
 
 ### 🌐 Phase 5: Full Web Application
 - Frontend: React or Next.js
 - Responsive UI for editing, scoring, and exporting resumes
-- Multi-language support
+- Multilanguage support
 - ATS score simulation + PDF resume export
 
-### 💰 Optional Premium Features
+### 💰 Optional Premium Features (Commercialization)
 - Resume versioning
 - AI Resume Assistant (Chat-style)
 - PDF styling templates
@@ -77,13 +77,3 @@ This project is transitioning into a full-featured, scalable web platform.
 ├── README.md
 └── backend/                # (Planned) FastAPI backend modules
 ```
-
----
-
-## 💬 Contributing
-Have ideas? PRs and issues welcome! This project is being actively developed into a professional tool.
-
----
-
-## 👤 Creator
-Sohshun Tateishi — CS Master's @ Georgia Tech, passionate about developer tooling and ML applications for career support.
