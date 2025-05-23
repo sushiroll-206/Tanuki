@@ -49,7 +49,7 @@ def fetch_job_description(url):
 job_url = st.text_input("🔗 Optional: Paste a Job URL from LinkedIn, Indeed, or Lever")
 if st.button("Fetch JD from URL") and job_url:
     with st.spinner("Fetching job description..."):
-        jd_fetched = fetch_job_description(job_url).strip().replace('', ' ').replace('  ', ' ')
+        jd_fetched = fetch_job_description(job_url).strip().replace('  ', ' ')
         st.session_state.jd_input = jd_fetched
 
 jd_input = st.text_area("Paste Job Description", value=st.session_state.get("jd_input", ""))
